@@ -1,0 +1,202 @@
+<html>
+<head>
+    <title>关于我们信息的列表</title>
+    <link rel="stylesheet" href="/vendor/layuiadmin/layui/css/layui.css">
+    <script src="/vendor/layuiadmin/layui/layui.js"></script>
+    <style>
+        th .layui-table-cell{
+            height:40px;
+            line-height: 40px;
+        }
+        .layui-table-cell{
+            height:140px;
+            line-height: 140px;
+        }
+        th .laytable-cell-checkbox{
+            padding-top: 10px;
+        }
+        .laytable-cell-checkbox{
+            padding-top: 70px;
+        }
+
+        .layui-table img{
+            width: 300px;
+            height: 140px;
+            max-width: 300px;
+        }
+        .bianji{
+            line-height: 40px;width: 80px;text-align: center;height: 40px;
+        }
+
+    </style>
+</head>
+<body>
+<div class="demoTable layui-form">
+    <div class="layui-inline">
+        <label class="layui-form-label">名称</label>
+        <div class="layui-inline">
+            <input class="layui-input" name="typename" id="typename" autocomplete="off">
+        </div>
+    </div>
+    <button class="layui-btn sos"  data-type="reload">搜索</button>
+    <button class="layui-btn empty"  data-type="reload">清空</button>
+</div>
+<table id="productTable" lay-filter="test"></table>
+</body>
+</html>
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckData">获取选中行数据</button>
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckLength">获取选中数目</button>
+        <button class="layui-btn layui-btn-sm" lay-event="isAll">验证是否全选</button>
+    </div>
+</script>
+<script type="text/html" id="barDemo">
+    <a  class="layui-btn layui-btn-xs" lay-event="see" style="line-height: 40px;width: 80px;text-align: center;height: 40px;">查看内容</a>
+    <a  class="layui-btn layui-btn-xs" lay-event="edit" style="line-height: 40px;width: 80px;text-align: center;height: 40px;">编辑</a>
+    <a  class="layui-btn layui-btn-danger layui-btn-xs bianji" lay-event="del">删除</a>
+</script>
+<script>
+    layui.use(['table'],function () {
+        var table = layui.table
+            ,util = layui.util
+            ,$ =layui.jquery
+            ,layer = layui.layer
+        ;
+
+        table.render({
+            elem : '#productTable'
+            ,height : 534
+            ,url :'/admin/aboutus/list'
+            ,method : 'post'
+            ,width : '1800px'
+            ,toolbar: '#toolbarDemo'
+            ,defaultToolbar: ['filter', 'exports', 'print',]
+            ,page: true //开启分页 默认一页10条
+            ,page: {
+                layout: [  'prev', 'page', 'next', 'skip']
+                ,groups: 2
+                ,first: false
+                ,last: false
+
+            }
+            ,limit :5
+            ,cols:[ [
+                {type:'checkbox',fixed:'left', width:60}
+                ,{field: 'id', title: 'ID', width:80, sort: true}
+                ,{field: 'typename',title:'名称',width:160}
+                ,{field: 'photo',title: '相片',width: 300
+                    , templet:function (d) {
+                        return d.photo!= '1'  ? `<img src="/image/${d.photo}">` : "";
+                    }
+                }
+                ,{fixed: 'right', title:'操作', toolbar: '#barDemo', width:300}
+            ] ]
+            ,id : 'testReload'
+        });
+
+        //  搜索的时候重载
+        $('.demoTable .layui-btn').on('click',function () {
+
+            table.reload('testReload' ,{
+                page :{
+                    curr :1
+                }
+                ,where:{
+                    typename : $('#typename').val(),
+                }
+            });
+        });
+        // 清空搜索框选项 并且在搜索一次
+        $('.demoTable .empty').on('click',function () {
+            $("input[name='typename']").val(""),
+                table.reload('testReload' ,{
+                    page :{
+                        curr :1
+                    }
+                    ,where:{
+                        typename : $("input[name='typename']").val(),
+                    }
+                });
+        });
+
+
+        //  监听头部工具栏
+        table.on('toolbar(test)',function (obj) {
+            var checkStatus = table.checkStatus(obj.config.id);
+            if (obj.event==="getCheckData"){
+                var data = checkStatus.data;
+
+                console.log(data);
+
+            }
+            switch(obj.event){
+                case 'getCheckData':
+                    var data = checkStatus.data;
+                    layer.alert(JSON.stringify(data));
+                    break;
+                case 'getCheckLength':
+                    var data = checkStatus.data;
+                    layer.msg('选中了：'+ data.length + ' 个');
+                    break;
+                case 'isAll':
+                    layer.msg(checkStatus.isAll ? '全选': '未全选');
+                    break;
+
+                case 'LAYTABLE_TIPS':
+                    layer.alert('这是工具栏右侧自定义的一个图标按钮');
+                    break;
+            };
+        });
+
+        // 编辑 删除 监听事件
+        table.on('tool(test)', function(obj){
+            var data1 = obj.data;
+            console.log(data1);
+            if(obj.event === 'del'){
+                index = layer.confirm('真的删除行么', function(data){
+                    $.ajax({
+                        'method' : "post",
+                        'data'   : data1,
+                        'url'    : '/admin/aboutus/delete',
+                        'dataType' : 'json' ,
+                        'success' : function (n) {
+                            layer.open({
+                                'title': '提示框',
+                                'content': "删除成功",
+                                closeBtn: 0,
+                            });
+                        }
+                    })
+                    obj.del();
+                    layer.close(index);
+                });
+
+            } else if(obj.event === 'edit'){
+                layer.open({
+                    type: 2,
+                    title: '修改id值为'+data1.id+'的内容',
+                    shadeClose: true,
+                    shade: false,
+                    maxmin: true,
+                    area: ['893px', '600px'],
+                    'method' : "get",
+                    content:'/admin/aboutus/update?id='+data1.id
+                });
+            } else if(obj.event === 'see'){
+                layer.open({
+                    type: 2,
+                    title: '查看id值为'+data1.id+'的内容',
+                    shadeClose: true,
+                    shade: false,
+                    maxmin: true,
+                    area: ['893px', '600px'],
+                    'method' : "get",
+                    content:'/admin/aboutus/see?id='+data1.id
+                });
+            }
+        });
+
+
+    })
+</script>

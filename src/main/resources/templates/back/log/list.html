@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>日志记录</title>
+    <link rel="stylesheet" href="/vendor/layuiadmin/layui/css/layui.css">
+    <script src="/vendor/layuiadmin/layui/layui.js"></script>
+</head>
+<body>
+<table id="productTable" lay-filter="test"></table>
+</body>
+</html>
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckData">获取选中行数据</button>
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckLength">获取选中数目</button>
+        <button class="layui-btn layui-btn-sm" lay-event="isAll">验证是否全选</button>
+    </div>
+</script>
+<script>
+    layui.use(['table'],function () {
+        var table = layui.table
+            ,util = layui.util
+            ,$ =layui.jquery
+            ,layer = layui.layer
+        ;
+
+        table.render({
+            elem : '#productTable'
+            ,height : 534
+            ,url :'/admin/log/list'
+            ,method : 'post'
+            ,width : '1800px'
+            ,toolbar: '#toolbarDemo'
+            ,defaultToolbar: ['filter', 'exports', 'print',]
+            ,page: true //开启分页 默认一页10条
+            ,page: {
+                layout: [  'prev', 'page', 'next', 'skip']
+                ,groups: 2
+                ,first: false
+                ,last: false
+
+            }
+            ,limit :5
+            ,cols:[ [
+                {type:'checkbox',fixed:'left', width:60}
+                ,{field: 'id', title: 'ID', width:80, sort: true}
+                ,{field: 'ip',title:'ip',width:160}
+                ,{field: 'time',title:'登录时间',width:160
+                    ,templet:function(d){return util.toDateString(d.time, "yyyy-MM-dd HH:mm:ss");}}
+            ] ]
+            ,id : 'testReload'
+        });
+
+
+        //  监听头部工具栏
+        table.on('toolbar(test)',function (obj) {
+            var checkStatus = table.checkStatus(obj.config.id);
+            if (obj.event==="getCheckData"){
+                var data = checkStatus.data;
+                console.log(data);
+
+            }
+            switch(obj.event){
+                case 'getCheckData':
+                    var data = checkStatus.data;
+                    layer.alert(JSON.stringify(data));
+                    break;
+                case 'getCheckLength':
+                    var data = checkStatus.data;
+                    layer.msg('选中了：'+ data.length + ' 个');
+                    break;
+                case 'isAll':
+                    layer.msg(checkStatus.isAll ? '全选': '未全选');
+                    break;
+
+                case 'LAYTABLE_TIPS':
+                    layer.alert('这是工具栏右侧自定义的一个图标按钮');
+                    break;
+            };
+        });
+
+
+    })
+</script>
