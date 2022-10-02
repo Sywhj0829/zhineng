@@ -35,7 +35,7 @@ public class caseController {
     @ResponseBody
     public ResultJson add(Case c){
         caseService.insertSelective(c);
-        return ResultJson.success("ok1");
+        return ResultJson.success("ok3");
     }
 
     /**
