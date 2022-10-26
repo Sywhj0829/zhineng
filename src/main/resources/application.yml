@@ -1,6 +1,3 @@
-#日志的配置
-logging:
-  config: logback.xml
 
 #设置数据库的地址 解耦合
 datasource:
